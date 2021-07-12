@@ -6,6 +6,11 @@ export namespace CreateStatementError {
       super('User not found', 404);
     }
   }
+  export class DestUserNotFound extends AppError {
+    constructor() {
+      super('User for transfer not found', 404);
+    }
+  }
 
   export class InsufficientFunds extends AppError {
     constructor() {

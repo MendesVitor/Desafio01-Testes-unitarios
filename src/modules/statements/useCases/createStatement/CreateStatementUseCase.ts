@@ -13,16 +13,17 @@ export class CreateStatementUseCase {
 
     @inject('StatementsRepository')
     private statementsRepository: IStatementsRepository
-  ) {}
+  ) { }
 
-  async execute({ user_id, type, amount, description }: ICreateStatementDTO) {
+  async execute({ user_id, type, amount, description, dest_id }: ICreateStatementDTO) {
+
     const user = await this.usersRepository.findById(user_id);
 
-    if(!user) {
+    if (!user) {
       throw new CreateStatementError.UserNotFound();
     }
 
-    if(type === 'withdraw') {
+    if (type === 'withdraw' || type === 'transfer') {
       const { balance } = await this.statementsRepository.getUserBalance({ user_id });
 
       if (balance < amount) {
@@ -30,11 +31,30 @@ export class CreateStatementUseCase {
       }
     }
 
+    if (type === 'transfer') {
+      const destUser = await this.usersRepository.findById(dest_id);
+
+      if (!destUser) {
+        throw new CreateStatementError.DestUserNotFound();
+      }
+
+
+      await this.statementsRepository.create({
+        user_id: dest_id,
+        sender_id: user_id,
+        type,
+        amount,
+        description,
+        dest_id
+      });
+    }
+
     const statementOperation = await this.statementsRepository.create({
       user_id,
       type,
       amount,
-      description
+      description,
+      dest_id
     });
 
     return statementOperation;
